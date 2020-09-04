@@ -1,144 +1,33 @@
 import java.util.*;
 import java.io.*;
 
-public class RBTREES
-{
-    List<List<Integer>> red;
-    List<List<Integer>> black;
-    int red_count, black_count;
-    char color_black, color_red;
-    int route;
+class RBTREES {
+    InputReader in;
+    PrintWriter out;
 
-    void DFSREC(List<List<Integer>> list, char[] color, HashSet<Integer> seen, int curr, int val )
-    {
-        if(color_black!= color[curr-1])
-        {
+    void solve() {
 
-        }
+
     }
 
-    void BFS(List<List<Integer>> list, HashSet<Integer> seen)
-    {
-        Queue<Integer> q=new LinkedList<>();
-        seen.add(1);
-        q.add(1);
-        boolean bool= true;
+    void run() throws Exception {
+        in = new InputReader(System.in);
+        out = new PrintWriter(System.out);
 
-        while(!q.isEmpty())
-        {
-            int size= q.size();
-            List<Integer> temp= new ArrayList<>();
-
-            for(int i=0;i<size;i++)
-            {
-                int curr= q.poll();
-                temp.add(curr);
-
-                for(int j: list.get(curr))
-                {
-                    if(seen.contains(j)) continue;
-                    q.add(j);
-                    seen.add(j);
-                }
-            }
-
-            if(bool)
-            {
-                red.add(temp);
-                red_count+= temp.size();
-            }
-            else
-            {
-                black.add(temp);
-                black_count+= temp.size();
-            }
-            bool=!bool;
-        }
-    }
-    void solve()
-    {
-        out= new PrintWriter(System.out);
-        in=new InputReader(System.in);
-
-        int t= in.nextInt();
-
-        for(int ii=0;ii<t;ii++)
-        {
-            red= new ArrayList<>();
-            black= new ArrayList<>();
-            red_count=0;
-            black_count=0;
-
-            int n= in.nextInt();
-            List<List<Integer>> list=new ArrayList<>();
-            for(int i=0;i<n+1;i++)
-                list.add(new ArrayList<>());
-
-            for(int i=1;i<n;i++)
-            {
-                int u= in.nextInt(), v= in.nextInt();
-                list.get(u).add(v);
-                list.get(v).add(u);
-            }
-
-            //sc.nextLine();
-            char[] color= in.readString().toCharArray();
-            HashSet<Integer> seen=new HashSet<>();
-            BFS(list, seen);
-
-            int b=0, r=0;
-            color_black= '1';
-            color_red= '0';
-            for(char c: color)
-                if(c=='1')
-                    b++;
-                else
-                    r++;
-
-            if(red_count< black_count)
-            {
-                List<List<Integer>> swap= red;
-                red= black;
-                black= swap;
-
-                red_count= red_count^black_count;
-                black_count= red_count^black_count;
-                red_count= red_count^black_count;
-            }
-
-            if(r<b)
-            {
-                r= r^b;
-                b= r^b;
-                r= r^b;
-                color_red= '1';
-                color_black= '0';
-            }
-
-            if(b!= black_count || red_count!=r)
-                out.println(-1);
-            else
-            {
-
-            }
-        }
-        out.close();
+        solve();
+        out.flush();
     }
 
     public static void main(String[] args) throws Exception {
-        new RBTREES().solve();
+        new RBTREES().run();
     }
-
-    InputReader in;
-    PrintWriter out;
-    String INPUT = "";
 
     static class InputReader {
 
         private final InputStream stream;
         private final byte[] buf = new byte[8192];
         private int curChar, snumChars;
-        private InputReader.SpaceCharFilter filter;
+        private SpaceCharFilter filter;
 
         public InputReader(InputStream stream) {
             this.stream = stream;
@@ -181,7 +70,7 @@ public class RBTREES
             return res * sgn;
         }
 
-        public int nextint() {
+        public long nextLong() {
             int c = snext();
             while (isSpaceChar(c)) {
                 c = snext();
@@ -191,7 +80,7 @@ public class RBTREES
                 sgn = -1;
                 c = snext();
             }
-            int res = 0;
+            long res = 0;
             do {
                 if (c < '0' || c > '9')
                     throw new InputMismatchException();
