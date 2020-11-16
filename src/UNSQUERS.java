@@ -1,130 +1,157 @@
 import java.util.*;
 import java.io.*;
 
-public class UNSQUERS {
+class UNSQUERS {
     InputStream is;
     OutputStream out = new BufferedOutputStream ( System.out );
     String INPUT = "";
+    HashMap<Integer, Integer> entryMap;
+    int totalSum=0, maxSuffixSum= 1, maxPrefixSum= 2, maxSubarraySum=3;
 
     void solve() throws IOException
     {
-        int n= ni(), q= ni(), s=ni();
+        int n=ni(), q= ni(), s= ni();
         int[] height= new int[n+1];
         for (int i = 1; i <=n; i++)
             height[i]= ni();
 
-        int[] higher= new int[n+1];
-        nextHigher(height, higher);
+        ArrayList<ArrayList<Integer>> arrayLists= new ArrayList<>();
+        for (int i = 0; i <=n; i++)
+            arrayLists.add(new ArrayList<>());
 
-//        for(int i=0;i<higher.length;i++)
-//            out.write((higher[i]+" ").getBytes());
-//        out.flush();
+        graph(arrayLists, height);
+//        out.write((arrayLists+"\n").getBytes());
 
-        int[][] tree= new int[4*n][];
-        build(1, higher.length-1, 0, tree, higher);
-
-        for (int i = 0; i <=12; i++)
+        ArrayList<Integer> flat= new ArrayList<>();
+        boolean[] visited= new boolean[n+1];
+        for(int i=n;i>=1;i--)
         {
-            if(i==9|| i==10) continue;
-            for (int j = 0; j < tree[i].length; j++)
-                out.write((tree[i][j]+" ").getBytes());
-            out.write("\n".getBytes());
-            out.flush();
+            if(visited[i]) continue;
+            DFSREC(arrayLists, visited, flat, i);
         }
 
-//        int ans=0;
-//        for (int i = 0; i < q; i++)
-//        {
-//            int x= ni(), y= ni();
-//            int l= (x+ s*ans-1)%n+ 1;
-//            int r= (y+ s*ans-1)%n+ 1;
-//            if(l> r)
-//            {
-//                l= l^r;
-//                r= l^r;
-//                l= l^r;
-//            }
-//            ans= call(higher, l, r);
-//
-//            out.write((ans+"\n").getBytes());
-//        }
+//        out.write((flat+"\n"+entryMap+"\n").getBytes());
 
+        int[][] tree= constructTree(flat, flat.size());
+
+        int ans=0;
+        for(int i=0;i<q;i++)
+        {
+            int x= ni(), y= ni();
+            int l= (x+ s* ans- 1)% n+ 1;
+            int r= (y+ s* ans- 1)% n+ 1;
+
+            if(l> r)
+            {
+                l= l^r;
+                r= l^r;
+                l= l^r;
+            }
+
+//            out.write((l+" "+r+"\n").getBytes());
+            ans= query(tree, entryMap.get(r), entryMap.get(l), flat.size());
+
+            out.write((ans+"\n").getBytes());
+        }
     }
 
-    private void nextHigher(int[] height, int[] higher) {
+    void build(int[][] tree, int start, int end, int index, ArrayList<Integer> arr)
+    {
+        if (start == end) {
+            tree[index][totalSum] = arr.get(start);
+            tree[index][maxSuffixSum] = arr.get(start);
+            tree[index][maxPrefixSum] = arr.get(start);
+            tree[index][maxSubarraySum] = arr.get(start);
+            return;
+        }
+
+        int mid = (start + end) / 2;
+        build(tree, start, mid, 2 * index, arr);
+        build(tree, mid + 1, end, 2 * index + 1, arr);
+
+        tree[index] = merge(tree[2 * index], tree[2 * index + 1]);
+    }
+
+    int[][] constructTree(ArrayList<Integer> arr, int n)
+    {
+        // Allocate memory for segment tree
+        int x = (int)(Math.ceil(Math.log(n)/Math.log(2))); // Height of the tree
+
+        int max_size = 2 * (int)Math.pow(2, x) - 1;
+        int[][] tree = new int[max_size][4];
+
+        build(tree, 0, n - 1, 1, arr);
+        return tree;
+    }
+
+    int[] queryUtil(int[][] tree, int ss, int se, int qs, int qe, int index)
+    {
+        if (ss > qe || se < qs)
+            return new int[]{0,0,0,0};
+
+        if (ss >= qs && se <= qe) {
+            return tree[index];
+        }
+
+        int mid = (ss + se) / 2;
+        int[] left = queryUtil(tree, ss, mid, qs, qe, 2 * index);
+        int[] right = queryUtil(tree, mid + 1, se, qs, qe, 2 * index + 1);
+
+        int[] res = merge(left, right);
+        return res;
+    }
+
+    int query(int[][] tree, int start, int end, int n)
+    {
+        int[] res = queryUtil(tree, 0, n - 1, start, end, 1);
+        return res[maxSubarraySum];
+    }
+
+    int[] merge(int[] leftChild, int[] rightChild)
+    {
+        int[] parentNode= new int[4];
+        parentNode[maxPrefixSum] = Math.max(leftChild[maxPrefixSum], leftChild[totalSum] + rightChild[maxPrefixSum]);
+
+        parentNode[maxSuffixSum] = Math.max(rightChild[maxSuffixSum], rightChild[totalSum] + leftChild[maxSuffixSum]);
+
+        parentNode[totalSum] = leftChild[totalSum] + rightChild[totalSum];
+
+        parentNode[maxSubarraySum] = Math.max(leftChild[maxSubarraySum], Math.max(rightChild[maxSubarraySum], leftChild[maxSuffixSum] + rightChild[maxPrefixSum]));
+
+        return parentNode;
+    }
+
+    private void DFSREC(ArrayList<ArrayList<Integer>> arrayLists, boolean[] visited, ArrayList<Integer> flat, int curr)
+    {
+        entryMap.put(curr, flat.size());
+        flat.add(1);
+        visited[curr]= true;
+
+        for(int i: arrayLists.get(curr))
+            DFSREC(arrayLists, visited, flat, i);
+
+        flat.add(-1);
+    }
+
+    private void graph(ArrayList<ArrayList<Integer>> arrayLists, int[] height)
+    {
         Stack<Integer> stack= new Stack<>();
-
-        for (int i =height.length-1; i>=1; i--)
+        for(int i=1;i< height.length;i++)
         {
-            while(!stack.isEmpty() && height[stack.peek()]<=height[i])
-                stack.pop();
-
-            if(stack.isEmpty())
-                higher[i]= height.length;
-            else
-                higher[i]= stack.peek();
+            while(!stack.isEmpty() && height[stack.peek()]< height[i])
+            {
+                int curr= stack.pop();
+                arrayLists.get(i).add(curr);
+            }
 
             stack.add(i);
         }
     }
 
-    private int call(int[] higher, int l, int r)
-    {
-        int[] memo= new int[higher.length];
-        int max=0;
-        for(int i=r;i>=l;i--)
-        {
-            if(higher[i]<=r)
-                memo[i]= memo[higher[i]];
-            memo[i]++;
-            max= Math.max(max, memo[i]);
-        }
-
-        return max;
-    }
-
-    int[] build(int start, int last, int index, int[][] tree, int[] higher)
-    {
-        if(start== last)
-        {
-            tree[index]= new int[]{1, 1};
-            return tree[index];
-        }
-        else
-        {
-            int mid= start+ (last- start)/2;
-            int[] left= build(start, mid, 2*index+1, tree, higher);
-            int[] right= build(mid+1, last, 2*index+2, tree, higher);
-
-            tree[index]= new int[left.length+ right.length-1];
-            int max= Math.max(left[left.length-1], right[right.length-1]);
-
-            int i;
-            for(i=0;i<left.length-1;i++)
-            {
-                if(higher[start+i]<= last && higher[start+i]>mid)
-                {
-                    tree[index][i]= left[i]+ right[higher[start+i]- mid];
-                }
-                else
-                    tree[index][i]= left[i];
-                max= Math.max(tree[index][i], max);
-            }
-
-            for(int j=0;j<right.length-1;j++)
-            {
-                tree[index][i+j]= right[j];
-            }
-
-            tree[index][tree[index].length-1]= max;
-            return tree[index];
-        }
-    }
-
-
     void run() throws Exception {
         is = INPUT.isEmpty() ? System.in : new ByteArrayInputStream(INPUT.getBytes());
 //        out = new PrintWriter(System.out);
+        entryMap= new HashMap<>();
 
         solve();
         out.flush();
